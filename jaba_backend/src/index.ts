@@ -62,7 +62,7 @@ export default Canister({
     /**
      * Add or update a user
      */
-    addOrUpdateUser: update([text, text, text], Variant({ Ok: User, Err: text }), (principal, name, email) => {
+    addOrUpdateUser: update([text, text, text], Result(User, Error), (principal, name, email) => {
         const existingUser = users.get(principal);
         const currentTime = Date.now().toString();
 
@@ -83,7 +83,7 @@ export default Canister({
                 createdAt: existingUser.createdAt 
             };
             users.insert(principal, updatedUser);
-            return { Ok: updatedUser };
+            return Ok(updatedUser);
         }
     }),
 
