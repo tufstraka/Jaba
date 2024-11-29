@@ -1,0 +1,15 @@
+{
+    "canisters": {
+        "jaba_backend": {
+            "type": "azle",
+            "main": "src/index.ts",
+            "custom":{
+                "experimental": true
+            },
+            "declarations": {
+                "output": "test/dfx_generated/hello_world",
+                "node_compatibility": true
+            }
+        }
+    }
+}

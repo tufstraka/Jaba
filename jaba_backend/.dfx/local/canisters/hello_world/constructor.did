@@ -1,0 +1,115 @@
+service : () -> {
+  addOrUpdateUser : (text, text, text) -> (
+      variant {
+        Ok : record {
+          "principal" : text;
+          name : text;
+          createdAt : text;
+          email : text;
+        };
+        Err : text;
+      },
+    );
+  categoriesLen : () -> (nat64) query;
+  createCategory : (text) -> (
+      variant {
+        Ok : record { id : text; name : text };
+        Err : record { message : text };
+      },
+    );
+  createComment : (text, text, text) -> (
+      variant {
+        Ok : record {
+          id : text;
+          content : text;
+          createdAt : text;
+          author : text;
+          proposalId : text;
+        };
+        Err : record { message : text };
+      },
+    );
+  createProposal : (text, text, text, text) -> (
+      variant {
+        Ok : record {
+          id : text;
+          status : text;
+          noVotes : text;
+          title : text;
+          creator : text;
+          yesVotes : text;
+          createdAt : text;
+          description : text;
+          category : text;
+        };
+        Err : record { message : text };
+      },
+    );
+  endProposal : (text) -> (variant { Ok : text; Err : text });
+  getCategories : () -> (vec record { id : text; name : text }) query;
+  getCategory : (text) -> (opt record { id : text; name : text }) query;
+  getComments : (text) -> (
+      variant {
+        Ok : vec record {
+          id : text;
+          content : text;
+          createdAt : text;
+          author : text;
+          proposalId : text;
+        };
+        Err : record { message : text };
+      },
+    ) query;
+  getProposal : (text) -> (
+      opt record {
+        id : text;
+        status : text;
+        noVotes : text;
+        title : text;
+        creator : text;
+        yesVotes : text;
+        createdAt : text;
+        description : text;
+        category : text;
+      },
+    ) query;
+  getProposals : () -> (
+      vec record {
+        id : text;
+        status : text;
+        noVotes : text;
+        title : text;
+        creator : text;
+        yesVotes : text;
+        createdAt : text;
+        description : text;
+        category : text;
+      },
+    ) query;
+  listUsers : () -> (
+      vec record {
+        "principal" : text;
+        name : text;
+        createdAt : text;
+        email : text;
+      },
+    ) query;
+  proposalsLen : () -> (nat64) query;
+  usersLen : () -> (nat64) query;
+  vote : (text, text, text) -> (
+      variant {
+        Ok : record {
+          id : text;
+          status : text;
+          noVotes : text;
+          title : text;
+          creator : text;
+          yesVotes : text;
+          createdAt : text;
+          description : text;
+          category : text;
+        };
+        Err : record { message : text };
+      },
+    );
+}
