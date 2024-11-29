@@ -83,10 +83,29 @@ voting-platform/
 
 4. Open `http://localhost:3000` in your browser to view the application. 🚀
 
+Make sure your .env looks like this, with your canister id
+
+```
+NEXT_PUBLIC_VOTING_CANISTER_ID=be2us-64aaa-aaaaa-qaabq-cai
+NODE_ENV=development
+NEXT_PUBLIC_IC_HOST=http://localhost:4943
+```
+
 The landing page will look similar to this
 
 ![Landing Page](landingpage.png)
 
+Category Management
+
+![Category Management](categorymanagement.png)
+
+User Profile
+
+![Profile](profile.png)
+
+Proposals 
+
+![Proposals](proposals.png)
 
 ## API Endpoints 🔌
 
