@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { createActor } from '@/utils/actor'
 import { Button } from '@/components/ui/button'
@@ -44,85 +44,87 @@ interface User {
   principal: { toText: () => string }
 }
 
+interface Actor {
+  getProposal: (id: string) => Promise<{ Ok?: Proposal, Err?: any }>;
+  vote: (proposalId: string, voteType: string, voter: string) => Promise<{ Ok?: Proposal, Err?: any }>;
+  getComments: (proposalId: string) => Promise<{ Ok?: Comment[], Err?: any }>;
+  createComment: (proposalId: string, content: string, author: string) => Promise<{ Ok?: Comment, Err?: any }>;
+  endProposal: (proposalId: string) => Promise<{ Ok?: string, Err?: any }>;
+}
+
+
 export default function ProposalPage() {
   const [proposal, setProposal] = useState<Proposal | null>(null) 
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState('')
-  const [actor, setActor] = useState<any>(null)
+  const [actor, setActor] = useState<Actor | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const { id } = useParams()
   const { toast } = useToast()
 
-  useEffect(() => {
-    const initActor = async () => {
-      try {
-        const newActor = await createActor()
-        setActor(newActor)
-        
-        // Get user principal and details
-        const principalResult = await getPrincipal()
-        if (principalResult) {
- 
-          setUser(principalResult as User)
-          
-        }
-        
-        setLoading(false)
-      } catch (error) {
-        console.error('Error initializing:', error)
-        toast({
-          title: "Initialization Error",
-          description: "Failed to initialize. Please refresh.",
-          variant: "destructive",
-        })
-        setLoading(false)
+  const initializeData = useCallback(async () => {
+    try {
+      const newActor = await createActor()
+      setActor(newActor)
+      
+      const principalResult = await getPrincipal()
+      if (principalResult) {
+        setUser(principalResult as User)
       }
+      
+      if (typeof id === 'string') {
+        await fetchProposalDetails(newActor, id)
+      }
+      
+      setLoading(false)
+    } catch (error) {
+      console.error('Initialization error:', error)
+      setError('Failed to initialize the page. Please try again.')
+      setLoading(false)
+      toast({
+        title: "Initialization Error",
+        description: "Failed to load proposal details.",
+        variant: "destructive",
+      })
     }
-    initActor()
-  }, [])
+  }, [id, toast])
+  const fetchProposalDetails = async (currentActor: Actor, proposalId: string) => {
+    try {
+      const proposalResult = await currentActor.getProposal(proposalId)
+      if (proposalResult.Ok) {
+        setProposal(proposalResult.Ok)
+      } else {
+        throw new Error(proposalResult.Err?.message || 'Failed to fetch proposal')
+      }
+
+      const commentsResult = await currentActor.getComments(proposalId)
+      if (commentsResult.Ok) {
+        const sortedComments = commentsResult.Ok.sort((a, b) => 
+          Number(b.createdAt) - Number(a.createdAt)
+        )
+        setComments(sortedComments)
+      }
+    } catch (error) {
+      console.error('Fetch error:', error)
+      setError('Failed to load proposal details')
+      toast({
+        title: "Fetch Error",
+        description: "Could not retrieve proposal information.",
+        variant: "destructive",
+      })
+    }
+  }
 
   useEffect(() => {
-    const fetchProposalData = async () => {
-      if (!actor) return
-
-      try {
-        // Fetch proposal
-        const proposalResult = await actor.getProposal(id)
-
-        console.log('proposalResult:', proposalResult)
-        if (proposalResult) {
-          setProposal(proposalResult)
-        }
-
-        // Fetch comments
-        const commentsResult = await actor.getComments(id)
-        if ('Ok' in commentsResult) {
-          // Sort comments by creation time
-            const sortedComments: Comment[] = commentsResult.Ok.sort((a: Comment, b: Comment) => 
-            Number(b.createdAt) - Number(a.createdAt)
-            )
-          setComments(sortedComments)
-        }
-      } catch (error) {
-        console.error('Error fetching proposal data:', error)
-        toast({
-          title: "Fetch Error",
-          description: "Failed to load proposal details.",
-          variant: "destructive",
-        })
-      }
-    }
-
-    if (actor) {
-      fetchProposalData()
-    }
-  }, [actor, id])
+    initializeData()
+  }, [initializeData])
 
   const handleVote = async (proposalId: string, voteType: string) => {
     if (!actor || !user) {
       toast({
-        title: "Error",
+        title: "Authentication Required",
         description: "Please log in to vote.",
         variant: "destructive",
       })
@@ -132,26 +134,20 @@ export default function ProposalPage() {
     try {
       const voteResult = await actor.vote(proposalId, voteType, user.principal.toText())
       
-      if ('Ok' in voteResult) {
-        // Update proposal in state
+      if (voteResult.Ok) {
         setProposal(voteResult.Ok)
         toast({
           title: "Vote Recorded",
           description: `Successfully voted ${voteType}`,
         })
       } else {
-        // Handle error case
-        toast({
-          title: "Vote Error",
-          description: voteResult.Err.message,
-          variant: "destructive",
-        })
+        throw new Error(voteResult.Err?.message || 'Vote failed')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Voting error:', error)
       toast({
         title: "Vote Error",
-        description: "Failed to record vote. Please try again.",
+        description: error.message || "Failed to record vote.",
         variant: "destructive",
       })
     }
@@ -160,14 +156,15 @@ export default function ProposalPage() {
   const handleAddComment = async () => {
     if (!actor || !user) {
       toast({
-        title: "Error",
+        title: "Authentication Required",
         description: "Please log in to comment.",
         variant: "destructive",
       })
       return
     }
 
-    if (!newComment.trim()) {
+    const trimmedComment = newComment.trim()
+    if (!trimmedComment) {
       toast({
         title: "Invalid Comment",
         description: "Comment cannot be empty.",
@@ -177,46 +174,67 @@ export default function ProposalPage() {
     }
 
     try {
-      const commentResult = await actor.createComment(id, newComment, user.principal)
-      
-      if ('Ok' in commentResult) {
-        // Add new comment to state
-        const newCommentObj = commentResult.Ok
-        setComments([newCommentObj, ...comments])
+      if (typeof id === 'string') {
+        const commentResult = await actor.createComment(
+          id, 
+          trimmedComment, 
+          user.principal.toText()
+        )
         
-        // Clear input
-        setNewComment('')
-        
-        toast({
-          title: "Comment Added",
-          description: "Your comment has been successfully posted.",
-        })
-      } else {
-        // Handle error case
-        toast({
-          title: "Comment Error",
-          description: commentResult.Err.message,
-          variant: "destructive",
-        })
+        if (commentResult.Ok) {
+          const newCommentObj = commentResult.Ok
+          if (newCommentObj) {
+            setComments([newCommentObj, ...comments])
+            setNewComment('')
+          }
+          
+          toast({
+            title: "Comment Added",
+            description: "Your comment was successfully posted.",
+          })
+        } else {
+          throw new Error(commentResult.Err?.message || 'Comment creation failed')
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Comment error:', error)
       toast({
         title: "Comment Error",
-        description: "Failed to add comment. Please try again.",
+        description: error.message || "Failed to add comment.",
         variant: "destructive",
       })
     }
   }
 
-  // Render loading state
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-blue-500"></div>
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+          <p className="text-gray-600">Loading proposal details...</p>
+        </div>
       </div>
     )
   }
+
+  if (error || !proposal) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Card className="w-96 text-center">
+          <CardHeader>
+            <CardTitle className="text-red-600">Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">{error || 'Proposal not found'}</p>
+            <Button onClick={() => initializeData()}>
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">

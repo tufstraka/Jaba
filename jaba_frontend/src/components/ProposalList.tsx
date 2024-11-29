@@ -26,12 +26,12 @@ interface Proposal {
 interface Comment {
   id: string
   content: string
-  author: { toText: () => string }
+  author: string
 }
 
 interface Actor {
   getProposals: () => Promise<Proposal[]>;
-  vote: (proposalId: string, inFavor: boolean) => Promise<{ Ok?: boolean }>;
+  vote: (proposalId: string, inFavor: boolean) => Promise<{ Ok?: string }>;
   getComments: (proposalId: string) => Promise<{ Ok?: Comment[] }>;
   createComment: (proposalId: string, content: string, author: string ) => Promise<Comment>;
   endProposal: (proposalId: string) => Promise<{ Ok?: boolean }>;
@@ -80,6 +80,7 @@ export default function ProposalList({ proposals, handleVote, fetchProposals, us
         return;
       }
       const result = await actor.getComments(proposalId)
+
 
       if ('Ok' in result) {
         if (result.Ok) {
@@ -283,7 +284,7 @@ export default function ProposalList({ proposals, handleVote, fetchProposals, us
                   className="bg-white p-3 rounded-md mb-2 shadow-sm border"
                 >
                   <p className="font-medium text-gray-800 text-xs sm:text-sm">
-                    {comment.author.toText()}
+                    {comment.author}
                   </p>
                   <p className="text-gray-600 text-xs sm:text-sm">
                     {comment.content}

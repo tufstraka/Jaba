@@ -122,12 +122,15 @@ export default function ProposalsPage() {
         return;
       }
       const result = await actor.vote(proposalId, inFavor, voter)
+
+      console.log('vote result:', result  )
       if (result) {
         fetchProposals()
         toast({
           title: "Vote recorded",
           description: "Your vote has been recorded successfully.",
         })
+        console.log('Vote recorded successfully.')
       }
     } catch (error) {
       console.error('Error voting:', error)

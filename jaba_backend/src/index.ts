@@ -320,8 +320,12 @@ export default Canister({
      * @param id - The ID of the proposal
      * @returns The proposal
      */
-    getProposal: query([text], Opt(Proposal), (id) => {
-        return proposals.get(id);
+    getProposal: query([text], Result(Proposal, Error), (id) => {        
+        const proposal = proposals.get(id);
+        if (!proposal) {
+            return Err({ message: `Proposal with ID ${id} does not exist.` });
+        }
+        return Ok(proposal);
     }),
 
     /**
@@ -345,8 +349,12 @@ export default Canister({
      * // Returns { id: 2, name: "Health" }
      * 
      * */
-    getCategory: query([text], Opt(Category), (id) => {
-        return categories.get(id);
+    getCategory: query([text], Result(Category, Error), (id) => {
+        const category = categories.get(id);
+        if (!category) {
+            return Err({ message: `Category with ID ${id} does not exist.` });
+        }
+        return Ok(category);
     } ),
 
     /**
