@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getPrincipal } from '@/utils/actor'
-import { useToast } from "@/hooks/use-toast"
+import toast from 'react-hot-toast'
 
 interface User {
   principal: { toText: () => string }
@@ -25,7 +25,6 @@ export default function CreateProposalPage() {
   const [ user, setUser ] = useState<User | null>(null)
 
   const router = useRouter()
-  const { toast } = useToast()
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -66,19 +65,12 @@ export default function CreateProposalPage() {
       const result: CreateProposalResult = await actor.createProposal(title, description, categoryId, user?.principal.toText())
       console.log('result in proposal create:', result)
       if ('Ok' in result) {
-        toast({
-          title: "Proposal created",
-          description: "Your proposal has been created successfully.",
-        })
+        toast("Proposal created successfully", { icon: '✅' })
         router.push('/proposals')
       }
     } catch (error) {
       console.error('Error creating proposal:', error)
-      toast({
-        title: "Error",
-        description: "Failed to create proposal. Please try again.",
-        variant: "destructive",
-      })
+      toast("Failed to create proposal", { icon: '❌' })
     }
   }
 
