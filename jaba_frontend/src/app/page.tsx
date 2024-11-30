@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react'
 import { createActor, getPrincipal, login, logout } from '../utils/actor'
 import UserProfile from '@/components/UserProfile'
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import RecentProposals from '@/components/RecentProposals'
 import { User, Lock, Mail, CheckCircle, VoteIcon, Globe } from 'lucide-react'
+import toast from 'react-hot-toast';
 
 interface User {
   principal: { toText: () => string }
@@ -25,7 +25,6 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState<boolean>(false)
-  const { toast } = useToast()
 
   // Registration State
   const [registrationData, setRegistrationData] = useState({
@@ -49,11 +48,7 @@ export default function Home() {
         setLoading(false)
       } catch (error) {
         console.error('Error initializing actor:', error)
-        toast({
-          title: "Initialization Error",
-          description: "Failed to initialize the application. Please refresh.",
-          variant: "destructive",
-        })
+        toast("Failed to initialize actor", { icon: '❌' })
         setLoading(false)
       }
     }
@@ -75,11 +70,7 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error fetching user:', error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch user data. Please try again.",
-        variant: "destructive",
-      })
+      toast("Failed to fetch user data. Please try again.", { icon: '❌' })
     }
   }
 
@@ -91,11 +82,7 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Error fetching categories:', error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch categories. Please try again.",
-        variant: "destructive",
-      })
+      toast("Failed to fetch categories. Please try again.", { icon: '❌' })        
     }
   }
  
@@ -107,13 +94,10 @@ export default function Home() {
     const emailError = !registrationData.email || !/\S+@\S+\.\S+/.test(registrationData.email)
 
     if (nameError || emailError) {
-      toast({
-        title: "Validation Error",
-        description: nameError 
-          ? "Please enter a valid full name (at least 2 characters)." 
-          : "Please enter a valid email address.",
-        variant: "destructive",
-      })
+      toast( nameError 
+        ? "Please enter a valid full name (at least 2 characters)." 
+        : "Please enter a valid email address.",
+        { icon: '❌' })
       return
     }
 
@@ -125,24 +109,13 @@ export default function Home() {
         const newActor = await createActor()
         setActor(newActor)
         
-        toast({
-          title: "Logged in",
-          description: `Welcome, ${registrationData.name}!`,
-        })
+        toast( "Logged in, welcome!", { icon: '🎉' })
       } else {
-        toast({
-          title: "Login failed",
-          description: "Failed to log in. Please try again.",
-          variant: "destructive",
-        })
+        toast("Login failed", { icon: '❌' })
       }
     } catch (error) {
       console.error('Login error:', error)
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred during login.",
-        variant: "destructive",
-      })
+      toast("Login Error", { icon: '❌' })
     } finally {
       setLoading(false)
     }
@@ -153,17 +126,10 @@ export default function Home() {
       await logout()
       setUser(null)
       setActor(null)
-      toast({
-        title: "Logged out",
-        description: "You have been logged out.",
-      })
+      toast("Logged out", { icon: '👋' })
     } catch (error) {
       console.error('Logout error:', error)
-      toast({
-        title: "Logout Error",
-        description: "An error occurred while logging out.",
-        variant: "destructive",
-      })
+      toast("Logout Error", { icon: '❌' })
     }
   }
 
@@ -172,18 +138,11 @@ export default function Home() {
       const result = await actor.createCategory(name)
       if ('Ok' in result) {
         fetchCategories()
-        toast({
-          title: "Category created",
-          description: "New category has been created successfully.",
-        })
+        toast("Category created", { icon: '🎉' })
       }
     } catch (error) {
       console.error('Error creating category:', error)
-      toast({
-        title: "Error",
-        description: "Failed to create category. Please try again.",
-        variant: "destructive",
-      })
+      toast("Failed to create category", { icon: '❌' })
     }
   }
 

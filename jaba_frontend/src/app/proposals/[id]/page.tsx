@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Textarea } from '@/components/ui/textarea'
-import { useToast } from "@/hooks/use-toast"
+import toast from "react-hot-toast";
 import { getPrincipal } from '@/utils/actor'
 import { 
   ThumbsUp, 
@@ -62,7 +62,8 @@ export default function ProposalPage() {
   const [error, setError] = useState<string | null>(null)
   const [user, setUser] = useState<User | null>(null)
   const { id } = useParams()
-  const { toast } = useToast()
+
+  const postId = id as string
 
   const initializeData = useCallback(async () => {
     try {
@@ -74,20 +75,16 @@ export default function ProposalPage() {
         setUser(principalResult as User)
       }
       
-      if (typeof id === 'string') {
-        await fetchProposalDetails(newActor, id)
-      }
+      
+      await fetchProposalDetails(newActor, postId)
+      
       
       setLoading(false)
     } catch (error) {
       console.error('Initialization error:', error)
       setError('Failed to initialize the page. Please try again.')
       setLoading(false)
-      toast({
-        title: "Initialization Error",
-        description: "Failed to load proposal details.",
-        variant: "destructive",
-      })
+      toast("Failed to load proposal details.", { icon: '❌' })
     }
   }, [id, toast])
   const fetchProposalDetails = async (currentActor: Actor, proposalId: string) => {
@@ -109,11 +106,7 @@ export default function ProposalPage() {
     } catch (error) {
       console.error('Fetch error:', error)
       setError('Failed to load proposal details')
-      toast({
-        title: "Fetch Error",
-        description: "Could not retrieve proposal information.",
-        variant: "destructive",
-      })
+      toast("Could not retrieve proposal information.", { icon: '❌' })
     }
   }
 
@@ -123,11 +116,7 @@ export default function ProposalPage() {
 
   const handleVote = async (proposalId: string, voteType: string) => {
     if (!actor || !user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to vote.",
-        variant: "destructive",
-      })
+      toast("Please log in to vote.", { icon: '❌' })
       return
     }
 
@@ -136,40 +125,25 @@ export default function ProposalPage() {
       
       if (voteResult.Ok) {
         setProposal(voteResult.Ok)
-        toast({
-          title: "Vote Recorded",
-          description: `Successfully voted ${voteType}`,
-        })
+        toast(`Successfully voted ${voteType}`, { icon: '🗳️' })
       } else {
         throw new Error(voteResult.Err?.message || 'Vote failed')
       }
     } catch (error: any) {
       console.error('Voting error:', error)
-      toast({
-        title: "Vote Error",
-        description: error.message || "Failed to record vote.",
-        variant: "destructive",
-      })
+      toast(`Vote Error : ${error.message}`, { icon: '❌' })
     }
   }
 
   const handleAddComment = async () => {
     if (!actor || !user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to comment.",
-        variant: "destructive",
-      })
+      toast("Please log in to comment.", { icon: '❌' })
       return
     }
 
     const trimmedComment = newComment.trim()
     if (!trimmedComment) {
-      toast({
-        title: "Invalid Comment",
-        description: "Comment cannot be empty.",
-        variant: "destructive",
-      })
+      toast("Comment cannot be empty.", { icon: '❌' })
       return
     }
 
@@ -188,21 +162,14 @@ export default function ProposalPage() {
             setNewComment('')
           }
           
-          toast({
-            title: "Comment Added",
-            description: "Your comment was successfully posted.",
-          })
+          toast("Your comment was successfully posted.", { icon: '📝' })
         } else {
           throw new Error(commentResult.Err?.message || 'Comment creation failed')
         }
       }
     } catch (error: any) {
       console.error('Comment error:', error)
-      toast({
-        title: "Comment Error",
-        description: error.message || "Failed to add comment.",
-        variant: "destructive",
-      })
+      toast(`Comment Error : ${error.message}`, { icon: '❌' })
     }
   }
 

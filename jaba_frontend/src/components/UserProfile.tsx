@@ -10,7 +10,7 @@ import {
   Clipboard, 
   ClipboardCopy 
 } from 'lucide-react'
-import { useToast } from "@/hooks/use-toast"
+import toast from 'react-hot-toast'
 
 interface User {
   principal: { toText: () => string }
@@ -25,7 +25,6 @@ interface UserProfileProps {
 export default function UserProfile({ user, onCreateCategory, onLogout }: UserProfileProps) {
   const [newCategory, setNewCategory] = useState('')
   const [isCopied, setIsCopied] = useState(false)
-  const { toast } = useToast()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,29 +32,18 @@ export default function UserProfile({ user, onCreateCategory, onLogout }: UserPr
     // Validate category name
     const trimmedCategory = newCategory.trim()
     if (!trimmedCategory) {
-      toast({
-        title: "Validation Error",
-        description: "Category name cannot be empty.",
-        variant: "destructive"
-      })
+      toast("Category name cannot be empty.", { icon: '❌' })
       return
     }
 
     if (trimmedCategory.length < 2) {
-      toast({
-        title: "Validation Error",
-        description: "Category name must be at least 2 characters long.",
-        variant: "destructive"
-      })
+      toast("Category name must be at least 2 characters long.", { icon: '❌' })
       return
     }
 
     onCreateCategory(trimmedCategory)
     setNewCategory('')
-    toast({
-      title: "Category Created",
-      description: `Category "${trimmedCategory}" has been created.`
-    })
+    toast(`Category "${trimmedCategory}" has been created.`, { icon: '🎉' })
   }
 
   const handleCopyPrincipal = () => {
@@ -63,10 +51,7 @@ export default function UserProfile({ user, onCreateCategory, onLogout }: UserPr
     navigator.clipboard.writeText(principalText).then(() => {
       setIsCopied(true)
       setTimeout(() => setIsCopied(false), 2000)
-      toast({
-        title: "Copied",
-        description: "Principal ID copied to clipboard"
-      })
+      toast("Principal ID copied to clipboard", { icon: '📋' })
     })
   }
 

@@ -6,7 +6,7 @@ import { createActor } from '@/utils/actor'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { useToast } from "@/hooks/use-toast"
+import toast from "react-hot-toast"
 import { 
   PlusCircle, 
   Layers, 
@@ -31,7 +31,6 @@ export default function CategoriesPage() {
   const [newCategory, setNewCategory] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { toast } = useToast()
 
   useEffect(() => {
     fetchCategories()
@@ -54,11 +53,7 @@ export default function CategoriesPage() {
       }
     } catch (error) {
       console.error('Error fetching categories:', error)
-      toast({
-        title: "Fetch Error",
-        description: "Failed to load categories. Please check your connection.",
-        variant: "destructive",
-      })
+      toast("Failed to fetch categories", { icon: '❌' })
     } finally {
       setIsLoading(false)
     }
@@ -70,30 +65,18 @@ export default function CategoriesPage() {
     // Validate category name
     const trimmedCategory = newCategory.trim()
     if (!trimmedCategory) {
-      toast({
-        title: "Validation Error",
-        description: "Category name cannot be empty.",
-        variant: "destructive"
-      })
+      toast("Category name cannot be empty.", { icon: '❌' })
       return
     }
 
     if (trimmedCategory.length < 2) {
-      toast({
-        title: "Validation Error",
-        description: "Category name must be at least 2 characters long.",
-        variant: "destructive"
-      })
+      toast("Category name must be at least 2 characters long.", { icon: '❌' })
       return
     }
 
     // Check for duplicate category
     if (categories.some(cat => cat.name.toLowerCase() === trimmedCategory.toLowerCase())) {
-      toast({
-        title: "Duplicate Category",
-        description: "A category with this name already exists.",
-        variant: "destructive"
-      })
+      toast("Category already exists.", { icon: '❌' })
       return
     }
 
@@ -103,11 +86,7 @@ export default function CategoriesPage() {
       const result = await actor.createCategory(trimmedCategory)
       
       if ('Ok' in result && result.Ok) {
-        toast({
-          title: "Category Created",
-          description: `Category "${trimmedCategory}" has been added successfully.`,
-          icon: <CheckCircle2 className="text-green-500" />
-        })
+        toast("Category created successfully", { icon: <CheckCircle2 className="text-emerald-500" /> })
         setNewCategory('')
         await fetchCategories()
       } else {
@@ -115,12 +94,7 @@ export default function CategoriesPage() {
       }
     } catch (error) {
       console.error('Error creating category:', error)
-      toast({
-        title: "Creation Error",
-        description: "Failed to create category. Please try again.",
-        variant: "destructive",
-        icon: <XCircle className="text-red-500" />
-      })
+      toast("Failed to create category", { icon: <XCircle className="text-red-500" /> })
     } finally {
       setIsSubmitting(false)
     }

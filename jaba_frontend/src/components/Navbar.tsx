@@ -4,9 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-//import { ThemeToggle } from '@/components/theme-toggle'
 import { createActor, login, logout, getPrincipal } from '@/utils/actor'
-import { useToast } from '@/hooks/use-toast'
+//import toast from 'react-hot-toast'
 
 interface User {
   principal: { toText: () => string }
@@ -16,7 +15,7 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null)
   const [actor, setActor] = useState(null)
   const pathname = usePathname()
-  const { toast } = useToast()
+
 
   /*useEffect(() => {
     const initActor = async () => {

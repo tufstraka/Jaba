@@ -4,8 +4,8 @@ import { Suspense, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { createActor } from '@/utils/actor'
-import { useToast } from '@/hooks/use-toast'
 import { getPrincipal } from '@/utils/actor'
+import toast from 'react-hot-toast'
 
 interface Proposal {
   id: string
@@ -37,8 +37,6 @@ export default function ProposalsPage() {
   const [actor, setActor] = useState<Actor | null>(null);
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
 
 
   useEffect(() => {
@@ -67,11 +65,7 @@ export default function ProposalsPage() {
       console.log('User:', result)
     } catch (error) {
       console.error('Error fetching user:', error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch user data. Please try again.",
-        variant: "destructive",
-      })
+      toast("Failed to fetch user", { icon: '❌' })
     }
   }
 
@@ -81,11 +75,7 @@ export default function ProposalsPage() {
     setLoading(true)
     try {
       if (!actor) {
-        toast({
-          title: "Error",
-          description: "Actor is not initialized. Please try again.",
-          variant: "destructive",
-        });
+        toast("Actor is not initialized. Please try again.", { icon: '❌' });
         console.error('Actor is not initialized. Please try again.');
         setLoading(false);
         return;
@@ -100,11 +90,7 @@ export default function ProposalsPage() {
       }
     } catch (error) {
       console.error('Error fetching proposals:', error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch proposals. Please try again.",
-        variant: "destructive",
-      })
+      toast("Failed to fetch proposals", { icon: '❌' })
     }
     setLoading(false)
   }
@@ -112,12 +98,7 @@ export default function ProposalsPage() {
   const handleVote = async (proposalId: string, inFavor: string, voter: string) => {
     try {
       if (!actor) {
-        toast({
-          title: "Error",
-          description: "Actor is not initialized. Please try again.",
-          variant: "destructive",
-        });
-
+        toast("Actor is not initialized. Please try again.", { icon: '❌' });
         console.error('Actor is not initialized. Please try again.');
         return;
       }
@@ -126,19 +107,12 @@ export default function ProposalsPage() {
       console.log('vote result:', result  )
       if (result) {
         fetchProposals()
-        toast({
-          title: "Vote recorded",
-          description: "Your vote has been recorded successfully.",
-        })
+        toast("Vote recorded successfully.", { icon: '🎉' })
         console.log('Vote recorded successfully.')
       }
     } catch (error) {
       console.error('Error voting:', error)
-      toast({
-        title: "Error",
-        description: "Failed to record vote. Please try again.",
-        variant: "destructive",
-      })
+      toast("Failed to record vote", { icon: '❌' })
     }
   }
 

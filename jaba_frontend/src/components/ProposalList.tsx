@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
-import { useToast } from "@/hooks/use-toast"
+import toast from 'react-hot-toast'
 import { MessageCircle, ThumbsUp, ThumbsDown, X } from 'lucide-react'
 
 interface Proposal {
@@ -48,7 +48,6 @@ export default function ProposalList({ proposals, handleVote, fetchProposals, us
   const [loading, setLoading] = useState(false)
   const [actor, setActor] = useState<Actor | null>(null)
   const [expandedProposals, setExpandedProposals] = useState<Record<string, boolean>>({})
-  const { toast } = useToast()
 
   useEffect(() => {
     const initActor = async () => {
@@ -72,11 +71,7 @@ export default function ProposalList({ proposals, handleVote, fetchProposals, us
   const fetchComments = async (proposalId: string) => {
     try {
       if (!actor) {
-        toast({
-          title: "Error",
-          description: "Actor is not initialized. Please try again.",
-          variant: "destructive",
-        });
+        toast("Actor is not initialized", { icon: '❌' })
         return;
       }
       const result = await actor.getComments(proposalId)
@@ -89,32 +84,20 @@ export default function ProposalList({ proposals, handleVote, fetchProposals, us
       }
     } catch (error) {
       console.error('Error fetching comments:', error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch comments.",
-        variant: "destructive",
-      })
+      toast("Failed to fetch comments", { icon: '❌' })
     }
   }
 
   const handleCreateComment = async (proposalId: string) => {
     try {
       if (!actor) {
-        toast({
-          title: "Error",
-          description: "Actor is not initialized. Please try again.",
-          variant: "destructive",
-        });
+        toast("Actor is not initialized", { icon: '❌' })
         return;
       }
       
       const commentContent = newComments[proposalId]?.trim()
       if (!commentContent) {
-        toast({
-          title: "Error",
-          description: "Comment cannot be empty.",
-          variant: "destructive",
-        });
+        toast("Comment cannot be empty", { icon: '❌' })
         return;
       }
 
@@ -122,46 +105,28 @@ export default function ProposalList({ proposals, handleVote, fetchProposals, us
       if ('Ok' in result) {
         fetchComments(proposalId)
         setNewComments(prev => ({ ...prev, [proposalId.toString()]: '' }))
-        toast({
-          title: "Comment added",
-          description: "Your comment has been added successfully.",
-        })
+        toast("Comment added successfully", { icon: '🎉' })
       }
     } catch (error) {
       console.error('Error creating comment:', error)
-      toast({
-        title: "Error",
-        description: "Failed to add comment. Please try again.",
-        variant: "destructive",
-      })
+      toast("Failed to create comment", { icon: '❌' })
     }
   }
 
   const handleEndProposal = async (proposalId: string) => {
     try {
       if (!actor) {
-        toast({
-          title: "Error",
-          description: "Actor is not initialized. Please try again.",
-          variant: "destructive",
-        });
+        toast("Actor is not initialized", { icon: '❌' })
         return;
       }
       const result = await actor.endProposal(proposalId)
       if ('Ok' in result) {
         fetchProposals()
-        toast({
-          title: "Proposal ended",
-          description: "The proposal has been ended successfully.",
-        })
+        toast("Proposal ended successfully", { icon: '🎉' })
       }
     } catch (error) {
       console.error('Error ending proposal:', error)
-      toast({
-        title: "Error",
-        description: "Failed to end proposal. Please try again.",
-        variant: "destructive",
-      })
+      toast("Failed to end proposal", { icon: '❌' })
     }
   }
 
