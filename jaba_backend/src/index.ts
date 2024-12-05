@@ -57,12 +57,29 @@ let proposals = StableBTreeMap(0, text, Proposal);
 let categories = StableBTreeMap(1, text, Category);
 let users = StableBTreeMap(2, text, User);
 let comments = StableBTreeMap(3, text, Comment);
+let votes = StableBTreeMap(4, text, text);
+
+// Add new status types
+const ProposalStatus = {
+    OPEN: 'Open',
+    CLOSED: 'Closed',
+    EXECUTED: 'Executed',
+    REJECTED: 'Rejected'
+};
 
 export default Canister({
     /**
      * Add or update a user
      */
     addOrUpdateUser: update([text, text, text], Result(User, Error), (principal, name, email) => {
+        // Add validation
+        if (!name || name.trim() === '') {
+            return Err({ message: "Name cannot be empty" });
+        }
+        if (!email || !email.includes('@')) {
+            return Err({ message: "Invalid email format" });
+        }
+
         const existingUser = users.get(principal);
         const currentTime = Date.now().toString();
 
@@ -96,6 +113,14 @@ export default Canister({
         category, 
         creator
     ) => {
+        // Add validation
+        if (!title || title.trim() === '') {
+            return Err({ message: "Title cannot be empty" });
+        }
+        if (!description || description.trim() === '') {
+            return Err({ message: "Description cannot be empty" });
+        }
+
         // Check if user is registered
         const userExists = users.get(creator);
         if (!userExists) {
@@ -171,8 +196,11 @@ export default Canister({
             return Err({message: `Invalid vote type "${voteType}". Please vote "yes" or "no".`} );
         }
 
+        const voteKey = `${proposalId}_${voter}`;
+        
         // Update the proposal
         proposals.insert(proposalId, updatedProposal);
+        votes.insert(voteKey, voteType);
 
         return Ok(updatedProposal);
     }),
@@ -180,29 +208,37 @@ export default Canister({
     /**
      * End a proposal
      */
-    endProposal: update([text], Variant({ Ok: text, Err: text }), (proposalId) => {
+    endProposal: update([text], Result(Proposal, Error), (proposalId) => {
         // Retrieve the proposal
         const proposal = proposals.get(proposalId);
         if (!proposal) {
-            return { Err: `Error: Proposal with ID ${proposalId} does not exist.` };
+            return Err({ message: `Error: Proposal with ID ${proposalId} does not exist.` });
         }
 
         // Check if proposal is already closed
         if (proposal.status === 'Closed') {
-            return { Err: `Error: Proposal "${proposal.title}" is already closed.` };
+            return Err({ message: `Error: Proposal "${proposal.title}" is already closed.` });
+        }
+
+        // Add creator check
+        if (proposal.creator !== ic.caller().toString()) {
+            return Err({ message: "Only the proposal creator can end the proposal" });
         }
 
         // Update proposal status to closed
-        const updatedProposal = { 
-            ...proposal, 
-            status: 'Closed' 
+        const yesVotes = BigInt(proposal.yesVotes);
+        const noVotes = BigInt(proposal.noVotes);
+        
+        const status = yesVotes > noVotes ? ProposalStatus.EXECUTED : ProposalStatus.REJECTED;
+        
+        const updatedProposal = {
+            ...proposal,
+            status
         };
 
         proposals.insert(proposalId, updatedProposal);
 
-        return { 
-            Ok: `Proposal "${proposal.title}" has been closed. Final votes - Yes: ${proposal.yesVotes}, No: ${proposal.noVotes}` 
-        };
+        return Ok(updatedProposal);
     }),
 
     /**
@@ -363,4 +399,16 @@ export default Canister({
     proposalsLen: query([], nat64, () => proposals.len()),
     categoriesLen: query([], nat64, () => categories.len()),
     usersLen: query([], nat64, () => users.len()),
+
+    /**
+     * Get proposals paginated
+     * 
+     * @param offset - The starting index of the proposals
+     * @param limit - The number of proposals to return
+     * @returns The paginated proposals
+     */
+    getProposalsPaginated: query([nat64, nat64], Result(Vec(Proposal), Error), (offset, limit) => {
+        const allProposals = proposals.values();
+        return Ok(allProposals.slice(Number(offset), Number(offset) + Number(limit)));
+    }),
 });
