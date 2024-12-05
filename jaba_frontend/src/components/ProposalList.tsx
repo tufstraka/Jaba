@@ -119,7 +119,10 @@ export default function ProposalList({ proposals, handleVote, fetchProposals, us
         toast("Actor is not initialized", { icon: '❌' })
         return;
       }
+      console.log(typeof proposalId)
       const result = await actor.endProposal(proposalId)
+
+      console.log('end proposal result', result)
       if ('Ok' in result) {
         fetchProposals()
         toast("Proposal ended successfully", { icon: '🎉' })

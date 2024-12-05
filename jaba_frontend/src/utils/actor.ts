@@ -3,14 +3,15 @@ import { AuthClient } from '@dfinity/auth-client';
 import { idlFactory } from './voting_canister_backend.did.js';
 
 let actor: any = null;
-let host = process.env.NEXT_PUBLIC_IC_HOST || 'https://ic0.app';
-let canisterId = process.env.NEXT_PUBLIC_VOTING_CANISTER_ID || 'rrkah-fqaaa-aaaaa-aaaaq-cai';
+const host: string = `https://${process.env.NEXT_PUBLIC_VOTING_CANISTER_ID }.localhost:4943`
+const canisterId: string  = process.env.NEXT_PUBLIC_VOTING_CANISTER_ID || 'bkyz2-fmaaa-aaaaa-qaaaq-cai'
 
 /**
  * Create or retrieve the actor instance.
  */
 export const createActor = async (): Promise<any> => {
-  /*if (actor) return actor;
+
+  if (actor) return actor;
 
   const authClient = await AuthClient.create();
   const identity = authClient.getIdentity();
@@ -20,23 +21,18 @@ export const createActor = async (): Promise<any> => {
     return null;
   }
 
+  console.log(host)
+
+  const agent = await HttpAgent.create({identity, host, verifyQuerySignatures: false, shouldFetchRootKey: true});
 
 
-  const agent = await HttpAgent.create({ 
-    identity, 
-    host: host,
-    verifyQuerySignatures: false 
-  });*/
-
-  const agent = await HttpAgent.create({ host, verifyQuerySignatures: false });
-
-
-   //Only fetch root key in development
+   /*Only fetch root key in development
   if (process.env.NODE_ENV !== 'production') {
-    await agent.fetchRootKey().catch(err => {
+    await agent.fetchRootKey().catch((err: any) => {
       console.warn('Unable to fetch root key. Check internet connection');
+      console.log(err)
     });
-  }
+  }*/
 
   actor = Actor.createActor(idlFactory, {
     agent,
@@ -54,7 +50,7 @@ export const login = async (name: string, email: string): Promise<boolean> => {
 
   return new Promise<boolean>((resolve) => {
     authClient.login({
-      identityProvider: `https://identity.ic0.app/#authorize`,
+      identityProvider: host,
       onSuccess: async () => {
         actor = null; // Reset actor to force re-creation with new identity
         const actorInstance = await createActor();

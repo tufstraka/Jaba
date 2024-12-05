@@ -10,7 +10,7 @@ export const idlFactory = ({ IDL }) => {
               'createdAt' : IDL.Text,
               'email' : IDL.Text,
             }),
-            'Err' : IDL.Text,
+            'Err' : IDL.Record({ 'message' : IDL.Text }),
           }),
         ],
         [],
@@ -64,7 +64,22 @@ export const idlFactory = ({ IDL }) => {
       ),
     'endProposal' : IDL.Func(
         [IDL.Text],
-        [IDL.Variant({ 'Ok' : IDL.Text, 'Err' : IDL.Text })],
+        [
+          IDL.Variant({
+            'Ok' : IDL.Record({
+              'id' : IDL.Text,
+              'status' : IDL.Text,
+              'noVotes' : IDL.Text,
+              'title' : IDL.Text,
+              'creator' : IDL.Text,
+              'yesVotes' : IDL.Text,
+              'createdAt' : IDL.Text,
+              'description' : IDL.Text,
+              'category' : IDL.Text,
+            }),
+            'Err' : IDL.Record({ 'message' : IDL.Text }),
+          }),
+        ],
         [],
       ),
     'getCategories' : IDL.Func(
@@ -74,7 +89,12 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getCategory' : IDL.Func(
         [IDL.Text],
-        [IDL.Opt(IDL.Record({ 'id' : IDL.Text, 'name' : IDL.Text }))],
+        [
+          IDL.Variant({
+            'Ok' : IDL.Record({ 'id' : IDL.Text, 'name' : IDL.Text }),
+            'Err' : IDL.Record({ 'message' : IDL.Text }),
+          }),
+        ],
         ['query'],
       ),
     'getComments' : IDL.Func(
@@ -98,8 +118,8 @@ export const idlFactory = ({ IDL }) => {
     'getProposal' : IDL.Func(
         [IDL.Text],
         [
-          IDL.Opt(
-            IDL.Record({
+          IDL.Variant({
+            'Ok' : IDL.Record({
               'id' : IDL.Text,
               'status' : IDL.Text,
               'noVotes' : IDL.Text,
@@ -109,8 +129,9 @@ export const idlFactory = ({ IDL }) => {
               'createdAt' : IDL.Text,
               'description' : IDL.Text,
               'category' : IDL.Text,
-            })
-          ),
+            }),
+            'Err' : IDL.Record({ 'message' : IDL.Text }),
+          }),
         ],
         ['query'],
       ),
@@ -130,6 +151,28 @@ export const idlFactory = ({ IDL }) => {
               'category' : IDL.Text,
             })
           ),
+        ],
+        ['query'],
+      ),
+    'getProposalsPaginated' : IDL.Func(
+        [IDL.Nat64, IDL.Nat64],
+        [
+          IDL.Variant({
+            'Ok' : IDL.Vec(
+              IDL.Record({
+                'id' : IDL.Text,
+                'status' : IDL.Text,
+                'noVotes' : IDL.Text,
+                'title' : IDL.Text,
+                'creator' : IDL.Text,
+                'yesVotes' : IDL.Text,
+                'createdAt' : IDL.Text,
+                'description' : IDL.Text,
+                'category' : IDL.Text,
+              })
+            ),
+            'Err' : IDL.Record({ 'message' : IDL.Text }),
+          }),
         ],
         ['query'],
       ),
