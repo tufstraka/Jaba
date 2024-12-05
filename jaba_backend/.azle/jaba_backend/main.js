@@ -56326,11 +56326,24 @@ var proposals = StableBTreeMap(0, text, Proposal);
 var categories = StableBTreeMap(1, text, Category);
 var users = StableBTreeMap(2, text, User);
 var comments = StableBTreeMap(3, text, Comment);
+var votes = StableBTreeMap(4, text, text);
+var ProposalStatus = {
+  OPEN: "Open",
+  CLOSED: "Closed",
+  EXECUTED: "Executed",
+  REJECTED: "Rejected"
+};
 var src_default = Canister({
   /**
    * Add or update a user
    */
   addOrUpdateUser: update2([text, text, text], Result(User, Error2), (principal, name, email) => {
+    if (!name || name.trim() === "") {
+      return Err({ message: "Name cannot be empty" });
+    }
+    if (!email || !email.includes("@")) {
+      return Err({ message: "Invalid email format" });
+    }
     const existingUser = users.get(principal);
     const currentTime = Date.now().toString();
     if (!existingUser) {
@@ -56357,6 +56370,12 @@ var src_default = Canister({
    * Create a new proposal
    */
   createProposal: update2([text, text, text, text], Result(Proposal, Error2), (title2, description, category, creator) => {
+    if (!title2 || title2.trim() === "") {
+      return Err({ message: "Title cannot be empty" });
+    }
+    if (!description || description.trim() === "") {
+      return Err({ message: "Description cannot be empty" });
+    }
     const userExists = users.get(creator);
     if (!userExists) {
       return Err({ message: `Error: User with principal "${creator}" is not registered. Please log in.` });
@@ -56414,28 +56433,34 @@ var src_default = Canister({
     } else {
       return Err({ message: `Invalid vote type "${voteType}". Please vote "yes" or "no".` });
     }
+    const voteKey = `${proposalId}_${voter}`;
     proposals.insert(proposalId, updatedProposal);
+    votes.insert(voteKey, voteType);
     return Ok(updatedProposal);
   }),
   /**
    * End a proposal
    */
-  endProposal: update2([text], Variant2({ Ok: text, Err: text }), (proposalId) => {
+  endProposal: update2([text], Result(Proposal, Error2), (proposalId) => {
     const proposal = proposals.get(proposalId);
     if (!proposal) {
-      return { Err: `Error: Proposal with ID ${proposalId} does not exist.` };
+      return Err({ message: `Error: Proposal with ID ${proposalId} does not exist.` });
     }
     if (proposal.status === "Closed") {
-      return { Err: `Error: Proposal "${proposal.title}" is already closed.` };
+      return Err({ message: `Error: Proposal "${proposal.title}" is already closed.` });
     }
+    if (proposal.creator !== ic.caller().toString()) {
+      return Err({ message: "Only the proposal creator can end the proposal" });
+    }
+    const yesVotes = BigInt(proposal.yesVotes);
+    const noVotes = BigInt(proposal.noVotes);
+    const status = yesVotes > noVotes ? ProposalStatus.EXECUTED : ProposalStatus.REJECTED;
     const updatedProposal = {
       ...proposal,
-      status: "Closed"
+      status
     };
     proposals.insert(proposalId, updatedProposal);
-    return {
-      Ok: `Proposal "${proposal.title}" has been closed. Final votes - Yes: ${proposal.yesVotes}, No: ${proposal.noVotes}`
-    };
+    return Ok(updatedProposal);
   }),
   /**
    * Create a comment on a proposal
@@ -56560,7 +56585,18 @@ var src_default = Canister({
    */
   proposalsLen: query2([], nat64, () => proposals.len()),
   categoriesLen: query2([], nat64, () => categories.len()),
-  usersLen: query2([], nat64, () => users.len())
+  usersLen: query2([], nat64, () => users.len()),
+  /**
+   * Get proposals paginated
+   * 
+   * @param offset - The starting index of the proposals
+   * @param limit - The number of proposals to return
+   * @returns The paginated proposals
+   */
+  getProposalsPaginated: query2([nat64, nat64], Result(Vec2(Proposal), Error2), (offset, limit) => {
+    const allProposals = proposals.values();
+    return Ok(allProposals.slice(Number(offset), Number(offset) + Number(limit)));
+  })
 });
 
 // <stdin>

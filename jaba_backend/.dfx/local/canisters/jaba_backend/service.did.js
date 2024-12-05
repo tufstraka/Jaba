@@ -64,7 +64,22 @@ export const idlFactory = ({ IDL }) => {
       ),
     'endProposal' : IDL.Func(
         [IDL.Text],
-        [IDL.Variant({ 'Ok' : IDL.Text, 'Err' : IDL.Text })],
+        [
+          IDL.Variant({
+            'Ok' : IDL.Record({
+              'id' : IDL.Text,
+              'status' : IDL.Text,
+              'noVotes' : IDL.Text,
+              'title' : IDL.Text,
+              'creator' : IDL.Text,
+              'yesVotes' : IDL.Text,
+              'createdAt' : IDL.Text,
+              'description' : IDL.Text,
+              'category' : IDL.Text,
+            }),
+            'Err' : IDL.Record({ 'message' : IDL.Text }),
+          }),
+        ],
         [],
       ),
     'getCategories' : IDL.Func(
@@ -136,6 +151,28 @@ export const idlFactory = ({ IDL }) => {
               'category' : IDL.Text,
             })
           ),
+        ],
+        ['query'],
+      ),
+    'getProposalsPaginated' : IDL.Func(
+        [IDL.Nat64, IDL.Nat64],
+        [
+          IDL.Variant({
+            'Ok' : IDL.Vec(
+              IDL.Record({
+                'id' : IDL.Text,
+                'status' : IDL.Text,
+                'noVotes' : IDL.Text,
+                'title' : IDL.Text,
+                'creator' : IDL.Text,
+                'yesVotes' : IDL.Text,
+                'createdAt' : IDL.Text,
+                'description' : IDL.Text,
+                'category' : IDL.Text,
+              })
+            ),
+            'Err' : IDL.Record({ 'message' : IDL.Text }),
+          }),
         ],
         ['query'],
       ),

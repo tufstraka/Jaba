@@ -51,7 +51,23 @@ export interface _SERVICE {
       } |
       { 'Err' : { 'message' : string } }
   >,
-  'endProposal' : ActorMethod<[string], { 'Ok' : string } | { 'Err' : string }>,
+  'endProposal' : ActorMethod<
+    [string],
+    {
+        'Ok' : {
+          'id' : string,
+          'status' : string,
+          'noVotes' : string,
+          'title' : string,
+          'creator' : string,
+          'yesVotes' : string,
+          'createdAt' : string,
+          'description' : string,
+          'category' : string,
+        }
+      } |
+      { 'Err' : { 'message' : string } }
+  >,
   'getCategories' : ActorMethod<[], Array<{ 'id' : string, 'name' : string }>>,
   'getCategory' : ActorMethod<
     [string],
@@ -105,6 +121,25 @@ export interface _SERVICE {
         'category' : string,
       }
     >
+  >,
+  'getProposalsPaginated' : ActorMethod<
+    [bigint, bigint],
+    {
+        'Ok' : Array<
+          {
+            'id' : string,
+            'status' : string,
+            'noVotes' : string,
+            'title' : string,
+            'creator' : string,
+            'yesVotes' : string,
+            'createdAt' : string,
+            'description' : string,
+            'category' : string,
+          }
+        >
+      } |
+      { 'Err' : { 'message' : string } }
   >,
   'listUsers' : ActorMethod<
     [],

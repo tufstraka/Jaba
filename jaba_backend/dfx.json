@@ -10,6 +10,18 @@
                 "output": "test/dfx_generated/hello_world",
                 "node_compatibility": true
             }
-        }
-    }
+        },
+
+        "internet_identity": {
+            "type": "custom",
+            "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+            "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
+            "remote": {
+              "id": {
+                "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+              }
+            },
+            "frontend": {}
+          }
+}
 }
