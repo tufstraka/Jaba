@@ -3,14 +3,31 @@ import { AuthClient } from '@dfinity/auth-client';
 import { idlFactory } from './voting_canister_backend.did.js';
 
 let actor: any = null;
-const host: string = `https://${process.env.NEXT_PUBLIC_VOTING_CANISTER_ID }.localhost:4943`
-const canisterId: string  = process.env.NEXT_PUBLIC_VOTING_CANISTER_ID || 'bkyz2-fmaaa-aaaaa-qaaaq-cai'
+
+// Determine the host and canister ID based on environment
+const getHostAndCanisterId = () => {
+  const isDevelopment = process.env.NEXT_PUBLIC_NODE_ENV !== 'production';
+  
+  // Development configuration
+  if (isDevelopment) {
+    const localCanisterId = process.env.NEXT_PUBLIC_VOTING_CANISTER_ID;
+    return {
+      host: "http://bw4dl-smaaa-aaaaa-qaacq-cai.localhost:4943",
+      canisterId: localCanisterId || 'aaaaa-aa'
+    };
+  }
+  
+  // Production configuration
+  return {
+    host: 'https://icp0.io',
+    canisterId: process.env.NEXT_PUBLIC_VOTING_CANISTER_ID || 'be2us-64aaa-aaaaa-qaabq-cai'
+  };
+};
 
 /**
  * Create or retrieve the actor instance.
  */
 export const createActor = async (): Promise<any> => {
-
   if (actor) return actor;
 
   const authClient = await AuthClient.create();
@@ -21,22 +38,26 @@ export const createActor = async (): Promise<any> => {
     return null;
   }
 
-  console.log(host)
+  const { host, canisterId } = getHostAndCanisterId();
+  console.log('Connecting to host:', host);
+  console.log('Using canister ID:', canisterId);
 
-  const agent = await HttpAgent.create({identity, host, verifyQuerySignatures: false, shouldFetchRootKey: true});
+  const agent = await HttpAgent.create({
+    host,
+    identity,
+  });
 
-
-   /*Only fetch root key in development
-  if (process.env.NODE_ENV !== 'production') {
+  //Only fetch root key in development
+  if (process.env.NEXT_PUBLIC_NODE_ENV !== 'production') {
     await agent.fetchRootKey().catch((err: any) => {
       console.warn('Unable to fetch root key. Check internet connection');
-      console.log(err)
+      console.error(err);
     });
-  }*/
+  }
 
   actor = Actor.createActor(idlFactory, {
     agent,
-    canisterId: canisterId,
+    canisterId,
   });
 
   return actor;
@@ -47,10 +68,13 @@ export const createActor = async (): Promise<any> => {
  */
 export const login = async (name: string, email: string): Promise<boolean> => {
   const authClient = await AuthClient.create();
+  const { host } = getHostAndCanisterId();
 
   return new Promise<boolean>((resolve) => {
     authClient.login({
-      identityProvider: host,
+      identityProvider: process.env.NEXT_PUBLIC_NODE_ENV !== 'production' 
+        ? host 
+        : 'https://identity.ic0.app',
       onSuccess: async () => {
         actor = null; // Reset actor to force re-creation with new identity
         const actorInstance = await createActor();
@@ -69,7 +93,7 @@ export const login = async (name: string, email: string): Promise<boolean> => {
             principal,
             name,
             email
-        );
+          );
 
           // Check if the result indicates success
           if ('Ok' in result) {
@@ -92,9 +116,7 @@ export const login = async (name: string, email: string): Promise<boolean> => {
   });
 };
 
-/**
- * Log out the user and reset the actor.
- */
+// Rest of the code remains the same (logout, getPrincipal functions)
 export const logout = async (): Promise<void> => {
   const authClient = await AuthClient.create();
   await authClient.logout();
@@ -102,9 +124,6 @@ export const logout = async (): Promise<void> => {
   console.log('User logged out successfully.');
 };
 
-/**
- * Helper function to retrieve the current user's principal.
- */
 export const getPrincipal = async (): Promise<Object | null> => {
   const authClient = await AuthClient.create();
   const identity = authClient.getIdentity();
